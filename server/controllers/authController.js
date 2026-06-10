@@ -1,6 +1,7 @@
 const User = require('../models/User')
 const { createError } = require('../middleware/errorHandler')
 const { generateAccessToken, generateRefreshToken } = require('../utils/generateToken')
+const jwt = require('jsonwebtoken')
 
 const register = async (req, res, next) => {
   try {
@@ -92,4 +93,41 @@ const login = async (req, res, next) => {
   }
 }
 
-module.exports = { register, login }
+const refreshAccessToken = async (req, res, next) => {
+  try {
+    // 1. Get refresh token from cookie
+    const { refreshToken } = req.cookies
+
+    if (!refreshToken) {
+      return next(createError('No refresh token provided', 401))
+    }
+
+    // 2. Verify the refresh token
+    let decoded
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET)
+    } catch (error) {
+      return next(createError('Invalid or expired refresh token', 401))
+    }
+
+    // 3. Find user and verify the refresh token matches what we stored
+    const user = await User.findById(decoded.id)
+    if (!user || user.refreshToken !== refreshToken) {
+      return next(createError('Refresh token does not match', 401))
+    }
+
+    // 4. Generate new access token
+    const newAccessToken = generateAccessToken(user._id)
+
+    // 5. Return new access token
+    res.status(200).json({
+      success: true,
+      message: 'Access token refreshed',
+      accessToken: newAccessToken,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+module.exports = { register, login, refreshAccessToken }
