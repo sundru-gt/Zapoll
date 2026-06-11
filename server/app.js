@@ -19,6 +19,7 @@ app.use(cookieParser())
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'))
+app.use('/api/rooms', require('./routes/roomRoutes'))
 
 // Test route — confirms server is alive
 app.get('/api/health', (req, res) => {
