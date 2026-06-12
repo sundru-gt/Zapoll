@@ -1,13 +1,13 @@
 const express = require('express')
 const router = express.Router()
 const authMiddleware = require('../middleware/authMiddleware')
-const { register,login,refreshAccessToken } = require('../controllers/authController')
+const { register,login,refreshAccessToken,logout } = require('../controllers/authController')
 
 // POST /api/auth/register
 router.post('/register', register)
 router.post('/login', login)
 router.post('/refresh', refreshAccessToken)
-
+router.post('/logout', authMiddleware, logout)
 //protected route currently for testing purposes....
 router.get('/me', authMiddleware, (req, res) => {
   res.json({

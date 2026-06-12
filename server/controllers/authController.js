@@ -130,4 +130,35 @@ const refreshAccessToken = async (req, res, next) => {
   }
 }
 
-module.exports = { register, login, refreshAccessToken }
+const logout = async (req, res, next) => {
+  try {
+    const userId = req.userId
+
+    // 1. Find user
+    const user = await User.findById(userId)
+
+    if (!user) {
+      return next(createError('User not found', 404))
+    }
+
+    // 2. Clear refresh token from database
+    user.refreshToken = null
+    await user.save()
+
+    // 3. Clear refresh token cookie
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    })
+
+    // 4. Send response
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully',
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+module.exports = { register, login, refreshAccessToken, logout }
