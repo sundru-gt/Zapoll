@@ -2,12 +2,6 @@ const pdfParse = require('pdf-parse')
 const { generateQuestionsFromPDF } = require('../services/aiService')
 const { createError } = require('../middleware/errorHandler')
 
-console.log(pdfParse);
-// -------------------------------------------------------
-// @desc    Extract text from PDF and generate questions
-// @route   POST /api/ai/generate-from-pdf
-// @access  Private
-// -------------------------------------------------------
 const generateFromPDF = async (req, res, next) => {
   try {
     // 1. Check if file was uploaded
@@ -64,7 +58,7 @@ const generateFromPDF = async (req, res, next) => {
       success: true,
       message: `Generated ${questions.length} questions from PDF`,
       fileName: req.file.originalname,
-      textLength: data.text.length,
+      textLength: extractedText.length,
       questions,
     })
   } catch (error) {

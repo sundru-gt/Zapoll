@@ -2,10 +2,12 @@ const Room = require('../models/Room')
 const Question = require('../models/Question')
 const { createError } = require('../middleware/errorHandler')
 const { generateUniqueCode } = require('../utils/generateCode')
+const { generateQuestionsFromPDF } = require('../services/aiService')
+const pdfParse = require('pdf-parse')
 
 const createRoom = async (req, res, next) => {
   try {
-    const { title, description, questions, accessType, allowedEmails } = req.body
+    const { title, description, questions, accessType, allowedEmails, questionCount } = req.body
     const hostId = req.userId
 
     // 1. Validate input
@@ -36,10 +38,74 @@ const createRoom = async (req, res, next) => {
       allowedEmails: accessType === 'whitelist' ? allowedEmails : [],
     })
 
-    // 6. If questions provided, create them and link to room
-    if (questions && questions.length > 0) {
+    // 6. Handle questions — three scenarios:
+    let finalQuestions = []
+
+    // Scenario A: PDF file uploaded
+    if (req.file) {
+      console.log('📄 Processing PDF file for room creation...')
+
+      if (req.file.mimetype !== 'application/pdf') {
+        await Room.findByIdAndDelete(room._id)
+        return next(createError('File must be a PDF', 400))
+      }
+
+      const maxSize = 5 * 1024 * 1024
+      if (req.file.size > maxSize) {
+        await Room.findByIdAndDelete(room._id)
+        return next(createError('PDF must be under 5MB', 400))
+      }
+
+      try {
+        // Extract text from PDF
+        const data = await pdfParse(req.file.buffer)
+        let extractedText = data.text
+
+        if (!extractedText || extractedText.trim().length === 0) {
+          // Delete room since PDF has no text
+          await Room.findByIdAndDelete(room._id)
+          return next(createError('Could not extract text from PDF. It may be a scanned image.', 400))
+        }
+
+        // Limit text
+        const maxChars = 10000
+        if (extractedText.length > maxChars) {
+          extractedText = extractedText.substring(0, maxChars) + '...'
+        }
+
+        // Generate questions from PDF
+        const count = questionCount ? parseInt(questionCount) : 5
+        if (count < 1 || count > 20) {
+          await Room.findByIdAndDelete(room._id)
+          return next(createError('Question count must be between 1 and 20', 400))
+        }
+
+        console.log(`🤖 Generating ${count} questions from PDF...`)
+        finalQuestions = await generateQuestionsFromPDF(extractedText, count)
+        console.log(`✨ Generated ${finalQuestions.length} questions`)
+      } catch (pdfError) {
+        console.error('❌ PDF processing error:', pdfError.message)
+        await Room.findByIdAndDelete(room._id)
+        return next(createError(`PDF processing failed: ${pdfError.message}`, 400))
+      }
+    }
+
+    // Scenario B: Questions provided in request body
+    else if (questions && questions.length > 0) {
+      console.log('📝 Using provided questions...')
+      finalQuestions = questions
+    }
+
+    // Scenario C: No questions provided
+    else {
+      console.log('⚠️ No questions provided, creating empty room')
+      finalQuestions = []
+    }
+
+    // 7. Save questions to database if any
+    if (finalQuestions.length > 0) {
       const createdQuestions = await Question.insertMany(
-        questions.map((q, index) => ({
+        finalQuestions.map((q, index) => ({
           room: room._id,
           text: q.text,
           options: q.options,
@@ -53,9 +119,10 @@ const createRoom = async (req, res, next) => {
       // Update room with question IDs
       room.questions = createdQuestions.map((q) => q._id)
       await room.save()
+      console.log(`✅ Saved ${createdQuestions.length} questions to database`)
     }
 
-    // 7. Return room with populated questions
+    // 8. Return room with populated questions
     await room.populate('host', 'name email')
     await room.populate('questions')
 
@@ -65,9 +132,11 @@ const createRoom = async (req, res, next) => {
       room,
     })
   } catch (error) {
+    console.error('❌ Error:', error.message)
     next(error)
   }
 }
+
 
 const getMyRooms = async (req, res, next) => {
   try {
@@ -87,6 +156,7 @@ const getMyRooms = async (req, res, next) => {
     next(error)
   }
 }
+
 
 const getRoomByCode = async (req, res, next) => {
   try {
@@ -113,6 +183,7 @@ const getRoomByCode = async (req, res, next) => {
     next(error)
   }
 }
+
 
 const getRoomById = async (req, res, next) => {
   try {
@@ -241,7 +312,6 @@ const joinRoom = async (req, res, next) => {
       }
     }
     // If public, anyone can join (no email check needed)
-
     // 4. Participant is allowed, return room
     await room.populate('host', 'name email')
     await room.populate('questions')
