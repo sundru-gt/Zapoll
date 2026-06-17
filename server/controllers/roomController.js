@@ -1,5 +1,6 @@
 const Room = require('../models/Room')
 const Question = require('../models/Question')
+const User = require('../models/User')
 const { createError } = require('../middleware/errorHandler')
 const { generateUniqueCode } = require('../utils/generateCode')
 const { generateQuestionsFromPDF } = require('../services/aiService')
@@ -10,6 +11,22 @@ const createRoom = async (req, res, next) => {
     const { title, description, questions, accessType, allowedEmails, questionCount } = req.body
     const hostId = req.userId
 
+    const user = await User.findById(hostId)
+      if (!user) {
+        return next(createError('User not found', 404))
+      }
+
+      const FREE_QUIZ_LIMIT = 3
+      const totalAllowed = FREE_QUIZ_LIMIT + user.quizzesPaid
+
+      if (user.quizzesCreated >= totalAllowed) {
+        return next(
+          createError(
+            `You've reached your quiz limit (${totalAllowed}). Upgrade to create more.`,
+            402
+          )
+        )
+      }
     // 1. Validate input
     if (!title) {
       return next(createError('Quiz title is required', 400))
@@ -122,6 +139,8 @@ const createRoom = async (req, res, next) => {
       console.log(`✅ Saved ${createdQuestions.length} questions to database`)
     }
 
+    user.quizzesCreated += 1
+    await user.save()
     // 8. Return room with populated questions
     await room.populate('host', 'name email')
     await room.populate('questions')

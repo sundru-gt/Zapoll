@@ -38,6 +38,7 @@ app.locals.upload = upload
 app.use('/api/auth', require('./routes/authRoutes'))
 app.use('/api/rooms', require('./routes/roomRoutes'))
 app.use('/api/ai', require('./routes/aiRoutes'))
+app.use('/api/payments', require('./routes/paymentRoutes')) 
 
 // Test route — confirms server is alive
 app.get('/api/health', (req, res) => {
