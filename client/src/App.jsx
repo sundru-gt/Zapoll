@@ -1,18 +1,31 @@
-import { useEffect } from 'react'
-import axiosInstance from './api/axiosInstance'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { Toaster } from 'react-hot-toast'
+import { AuthProvider } from './context/AuthContext'
+import LandingPage from './pages/LandingPage'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
+import Dashboard from './pages/Dashboard'
+import ProtectedRoute from './components/ProtectedRoute'
 
-function App() {
-  useEffect(() => {
-    axiosInstance.get('/health')
-      .then(res => console.log('Backend says:', res.data))
-      .catch(err => console.error('Connection failed:', err))
-  }, [])
-
+export default function App() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
-      <h1 className="text-4xl font-bold">⚡ Zappoll</h1>
-    </div>
+    <Router>
+      <AuthProvider>
+        <Toaster position="top-right" />
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </AuthProvider>
+    </Router>
   )
 }
-
-export default App
