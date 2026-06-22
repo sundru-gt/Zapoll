@@ -7,6 +7,7 @@ import RegisterPage from './pages/RegisterPage'
 import Dashboard from './pages/Dashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import CreateQuizPage from './pages/CreateQuizPage'
+import HostQuizPage from './pages/HostQuizPage'
 
 export default function App() {
   return (
@@ -30,6 +31,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <CreateQuizPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/room/:roomId/host"
+            element={
+              <ProtectedRoute>
+                <HostQuizPage />
               </ProtectedRoute>
             }
           />

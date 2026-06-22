@@ -55,7 +55,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     )
@@ -64,23 +64,26 @@ export default function Dashboard() {
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* Navbar */}
-      <nav className="bg-white border-b border-gray-200 px-10 py-4 flex justify-between items-center sticky top-0 z-40">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center text-white font-bold">
+      <nav className="bg-white border-b border-gray-200 px-10 py-4 flex justify-between items-center sticky top-0 z-40 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-linear-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center text-white font-bold text-lg">
             Z
           </div>
           <span className="text-2xl font-bold text-blue-600">Zappoll</span>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-gray-700 font-medium">{user?.name}</span>
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-gray-900 font-semibold text-sm">{user?.name}</p>
+              <p className="text-gray-500 text-xs">{user?.email}</p>
+            </div>
+            <div className="w-10 h-10 bg-linear-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
               {user?.name?.charAt(0).toUpperCase()}
             </div>
           </div>
           <button
             onClick={logout}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 cursor-pointer transition"
+            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 cursor-pointer transition transform hover:-translate-y-0.5"
           >
             Logout
           </button>
@@ -90,67 +93,95 @@ export default function Dashboard() {
       {/* Main Content */}
       <div className="p-10 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-10">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">My Quizzes</h1>
-          <p className="text-gray-600">
-            You have created {rooms.length} quiz(zes). {quizLimit?.quizzesRemaining} free remaining.
+          <p className="text-gray-600 text-lg">
+            You have created{' '}
+            <span className="font-semibold text-blue-600">{rooms.length}</span> quiz(zes).{' '}
+            <span className="font-semibold text-green-600">{quizLimit?.quizzesRemaining}</span> free
+            remaining.
           </p>
         </div>
 
-        {/* Stats */}
+        {/* Stats Cards */}
         {quizLimit && (
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="text-sm text-gray-600 mb-2">Total Quizzes</div>
-              <div className="text-3xl font-bold text-blue-600">{rooms.length}</div>
+          <div className="grid grid-cols-3 gap-6 mb-10">
+            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 font-medium mb-2">Total Quizzes</p>
+                  <p className="text-4xl font-bold text-blue-600">{rooms.length}</p>
+                </div>
+                <div className="text-4xl">📊</div>
+              </div>
             </div>
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="text-sm text-gray-600 mb-2">Free Remaining</div>
-              <div className="text-3xl font-bold text-green-600">{quizLimit.quizzesRemaining}</div>
+
+            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 font-medium mb-2">Free Remaining</p>
+                  <p className="text-4xl font-bold text-green-600">
+                    {quizLimit.quizzesRemaining}
+                  </p>
+                </div>
+                <div className="text-4xl">🎁</div>
+              </div>
             </div>
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="text-sm text-gray-600 mb-2">Paid Quizzes</div>
-              <div className="text-3xl font-bold text-purple-600">{quizLimit.quizzesPaid}</div>
+
+            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 font-medium mb-2">Paid Quizzes</p>
+                  <p className="text-4xl font-bold text-purple-600">{quizLimit.quizzesPaid}</p>
+                </div>
+                <div className="text-4xl">💎</div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Create Button */}
-        <div className="mb-8">
+        {/* Create Button & Upgrade */}
+        <div className="mb-10 flex gap-4">
           {quizLimit?.canCreate ? (
             <button
               onClick={() => navigate('/create-quiz')}
-              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:shadow-lg transition transform hover:-translate-y-0.5 cursor-pointer"
+              className="px-8 py-3 bg-linear-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:shadow-lg transition transform hover:-translate-y-0.5 cursor-pointer text-lg"
             >
               + Create New Quiz
             </button>
           ) : (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-yellow-800 font-semibold">Quiz limit reached!</p>
-              <p className="text-yellow-700 text-sm">
-                Upgrade your plan to create more quizzes.
-              </p>
-              <button
-                onClick={() => navigate('/upgrade')}
-                className="mt-2 px-4 py-2 bg-yellow-600 text-white rounded-lg text-sm font-semibold hover:bg-yellow-700 cursor-pointer"
-              >
-                Upgrade Now
-              </button>
+            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 flex-1">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-yellow-900 font-bold text-lg mb-1">⚠️ Quiz Limit Reached</p>
+                  <p className="text-yellow-800">
+                    You've used all your free quizzes. Upgrade your plan to create more.
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate('/upgrade')}
+                  className="px-6 py-2 bg-yellow-600 text-white rounded-lg font-semibold hover:bg-yellow-700 cursor-pointer whitespace-nowrap ml-4 transition"
+                >
+                  Upgrade Now
+                </button>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Quiz Cards */}
+        {/* Quiz Cards Grid */}
         {rooms.length === 0 ? (
-          <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
-            <div className="text-5xl mb-4">📝</div>
-            <p className="text-gray-600 text-lg mb-4">No quizzes yet</p>
-            <p className="text-gray-500 text-sm mb-6">Create your first quiz to get started!</p>
+          <div className="bg-white border border-gray-200 rounded-lg p-16 text-center shadow-sm">
+            <div className="text-6xl mb-4">📝</div>
+            <p className="text-gray-900 text-2xl font-bold mb-2">No quizzes yet</p>
+            <p className="text-gray-600 text-lg mb-8">
+              Create your first quiz to get started and engage your students!
+            </p>
             <button
               onClick={() => navigate('/create-quiz')}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 cursor-pointer"
+              className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 cursor-pointer text-lg transition"
             >
-              Create Quiz
+              Create Your First Quiz
             </button>
           </div>
         ) : (
@@ -158,64 +189,98 @@ export default function Dashboard() {
             {rooms.map((room) => (
               <div
                 key={room._id}
-                className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition"
+                className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition transform hover:-translate-y-1"
               >
-                {/* Card Header */}
-                <div className="h-24 bg-gradient-to-r from-blue-500 to-blue-600 p-4 text-white flex flex-col justify-between">
+                {/* Card Header - Gradient */}
+                <div className="h-28 bg-linear-to-br from-blue-500 via-blue-600 to-blue-700 p-5 text-white flex flex-col justify-between">
                   <div>
-                    <h3 className="text-lg font-bold">{room.title}</h3>
-                    <p className="text-xs text-blue-100">{room.questions?.length || 0} questions</p>
+                    <h3 className="text-xl font-bold leading-tight">{room.title}</h3>
+                    {room.description && (
+                      <p className="text-xs text-blue-100 mt-1 line-clamp-1">{room.description}</p>
+                    )}
                   </div>
-                  <div className="text-xs bg-white/20 px-2 py-1 rounded w-fit font-mono">
-                    Code: {room.code}
+                  <div className="text-xs bg-white/20 backdrop-blur px-3 py-1.5 rounded-full w-fit font-mono font-semibold">
+                    📌 {room.code}
                   </div>
                 </div>
 
                 {/* Card Body */}
-                <div className="p-4">
-                  <div className="mb-4">
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-600">{room.participants?.length || 0} participants</span>
-                      <span
-                        className={`font-semibold ${
-                          room.status === 'active' ? 'text-green-600' : 'text-gray-600'
+                <div className="p-5">
+                  {/* Stats Row */}
+                  <div className="flex justify-between items-center mb-5 pb-5 border-b border-gray-200">
+                    <div className="flex items-center gap-4">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-gray-900">{room.questions?.length || 0}</p>
+                        <p className="text-xs text-gray-500">Questions</p>
+                      </div>
+                      <div className="w-px h-10 bg-gray-200"></div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-gray-900">{room.participants?.length || 0}</p>
+                        <p className="text-xs text-gray-500">Participants</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                          room.status === 'active'
+                            ? 'bg-green-100 text-green-700'
+                            : room.status === 'ended'
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-gray-100 text-gray-700'
                         }`}
                       >
-                        {room.status === 'active' ? '🟢 Active' : '⚪ Draft'}
-                      </span>
+                        {room.status === 'active' ? '🟢 Active' : room.status === 'ended' ? '🔴 Ended' : '⚪ Draft'}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2">
+                  {/* Primary Action Button */}
+                  <button
+                    onClick={() => navigate(`/room/${room._id}/host`)}
+                    className="w-full px-4 py-3 bg-linear-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:shadow-md transition transform hover:-translate-y-0.5 cursor-pointer mb-3 text-center"
+                  >
+                    ▶ Host Quiz
+                  </button>
+
+                  {/* Secondary Actions */}
+                  <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => handleCopyCode(room.code)}
-                      className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 cursor-pointer transition"
+                      className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 cursor-pointer transition text-center"
+                      title="Copy quiz code"
                     >
                       📋 Copy Code
                     </button>
                     <button
-                      onClick={() => navigate(`/room/${room._id}/host`)}
-                      className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 cursor-pointer transition"
-                    >
-                      ▶ Start
-                    </button>
-                  </div>
-
-                  {/* More Actions */}
-                  <div className="flex gap-2 mt-2">
-                    <button
                       onClick={() => navigate(`/room/${room._id}/edit`)}
-                      className="flex-1 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 cursor-pointer transition"
+                      className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 cursor-pointer transition text-center"
+                      title="Edit quiz"
                     >
                       ✏️ Edit
                     </button>
-                    <button
-                      onClick={() => handleDeleteQuiz(room._id)}
-                      className="flex-1 px-3 py-2 border border-red-300 text-red-600 rounded-lg text-sm font-semibold hover:bg-red-50 cursor-pointer transition"
+                  </div>
+
+                  {/* Delete Button */}
+                  <button
+                    onClick={() => handleDeleteQuiz(room._id)}
+                    className="w-full mt-2 px-3 py-2 border border-red-300 text-red-600 rounded-lg text-sm font-semibold hover:bg-red-50 cursor-pointer transition"
+                    title="Delete quiz"
+                  >
+                    🗑️ Delete Quiz
+                  </button>
+
+                  {/* Access Type Badge */}
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-xs text-gray-500 mb-2">Access Type</p>
+                    <div
+                      className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                        room.accessType === 'public'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-purple-100 text-purple-700'
+                      }`}
                     >
-                      🗑️ Delete
-                    </button>
+                      {room.accessType === 'public' ? '🌐 Public' : '🔒 Whitelist'}
+                    </div>
                   </div>
                 </div>
               </div>
