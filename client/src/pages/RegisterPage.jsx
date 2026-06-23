@@ -1,21 +1,58 @@
 import { useContext, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
+import { handleApiError, validateEmail, validatePassword } from '../api/errorHandler'
 import toast from 'react-hot-toast'
 
 export default function RegisterPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState({})
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const { register } = useContext(AuthContext)
   const navigate = useNavigate()
+
+  const validateForm = () => {
+    const newErrors = {}
+
+    if (!name.trim()) {
+      newErrors.name = 'Name is required'
+    } else if (name.trim().length < 2) {
+      newErrors.name = 'Name must be at least 2 characters'
+    }
+
+    if (!email.trim()) {
+      newErrors.email = 'Email is required'
+    } else if (!validateEmail(email)) {
+      newErrors.email = 'Please enter a valid email'
+    }
+
+    if (!password.trim()) {
+      newErrors.password = 'Password is required'
+    } else if (!validatePassword(password)) {
+      newErrors.password = 'Password must be at least 6 characters'
+    }
+
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match'
+    }
+
+    if (!agreedToTerms) {
+      newErrors.terms = 'You must agree to the terms'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    if (password.length < 8) {
-      toast.error('Password must be at least 8 characters')
+    if (!validateForm()) {
+      toast.error('Please fix the errors above')
       return
     }
 
@@ -23,23 +60,28 @@ export default function RegisterPage() {
 
     try {
       await register(name, email, password)
-      toast.success('Registration successful!')
+      toast.success('Registration successful! Welcome to Zappoll 🎉')
       navigate('/dashboard')
     } catch (error) {
-      toast.error(error || 'Registration failed')
+      if (error.includes('already exists')) {
+        setErrors({ email: 'This email is already registered' })
+        toast.error('Email already registered. Try logging in instead.')
+      } else {
+        handleApiError(error, 'Registration failed')
+      }
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="bg-linear-to-br from-blue-50 to-white min-h-screen flex items-center justify-center p-5">
+    <div className="bg-gradient-to-br from-blue-50 to-white min-h-screen flex items-center justify-center p-5">
       <div className="grid grid-cols-2 gap-12 max-w-4xl w-full items-center">
         {/* Left: Branding & Benefits */}
         <div>
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-linear-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center text-white font-bold text-lg">
                 Z
               </div>
               <span className="text-2xl font-bold text-gray-900">Zappoll</span>
@@ -49,7 +91,6 @@ export default function RegisterPage() {
           </div>
 
           <div className="mt-12 space-y-6">
-            {/* Benefit 1 */}
             <div className="flex gap-4">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
                 ✨
@@ -60,7 +101,6 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Benefit 2 */}
             <div className="flex gap-4">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
                 🎯
@@ -71,7 +111,6 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Benefit 3 */}
             <div className="flex gap-4">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
                 📊
@@ -98,10 +137,15 @@ export default function RegisterPage() {
                 type="text"
                 placeholder="John Doe"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition"
+                onChange={(e) => {
+                  setName(e.target.value)
+                  if (errors.name) setErrors({ ...errors, name: '' })
+                }}
+                className={`w-full px-4 py-3 border rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:bg-white transition ${
+                  errors.name ? 'border-red-500 focus:ring-red-600' : 'border-gray-300 focus:ring-blue-600'
+                }`}
               />
+              {errors.name && <p className="text-red-600 text-xs mt-1">⚠️ {errors.name}</p>}
             </div>
 
             <div>
@@ -110,10 +154,15 @@ export default function RegisterPage() {
                 type="email"
                 placeholder="you@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition"
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  if (errors.email) setErrors({ ...errors, email: '' })
+                }}
+                className={`w-full px-4 py-3 border rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:bg-white transition ${
+                  errors.email ? 'border-red-500 focus:ring-red-600' : 'border-gray-300 focus:ring-blue-600'
+                }`}
               />
+              {errors.email && <p className="text-red-600 text-xs mt-1">⚠️ {errors.email}</p>}
             </div>
 
             <div>
@@ -122,44 +171,90 @@ export default function RegisterPage() {
                 type="password"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition"
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  if (errors.password) setErrors({ ...errors, password: '' })
+                }}
+                className={`w-full px-4 py-3 border rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:bg-white transition ${
+                  errors.password ? 'border-red-500 focus:ring-red-600' : 'border-gray-300 focus:ring-blue-600'
+                }`}
               />
-              <p className="text-xs text-gray-500 mt-1">At least 8 characters</p>
+              {errors.password && <p className="text-red-600 text-xs mt-1">⚠️ {errors.password}</p>}
+              <p className="text-xs text-gray-500 mt-1">At least 6 characters</p>
             </div>
 
-            {/* Terms Checkbox */}
-            <label className="flex items-start gap-2 text-xs text-gray-600 mt-3 cursor-pointer">
-              <input type="checkbox" required className="mt-1 cursor-pointer" />
+            <div>
+              <label className="block mb-2 font-semibold text-sm text-gray-800">Confirm Password</label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value)
+                  if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: '' })
+                }}
+                className={`w-full px-4 py-3 border rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:bg-white transition ${
+                  errors.confirmPassword ? 'border-red-500 focus:ring-red-600' : 'border-gray-300 focus:ring-blue-600'
+                }`}
+              />
+              {errors.confirmPassword && (
+                <p className="text-red-600 text-xs mt-1">⚠️ {errors.confirmPassword}</p>
+              )}
+            </div>
+
+            <label
+              className={`flex items-start gap-2 text-xs mt-4 pt-2 pb-2 cursor-pointer ${
+                errors.terms ? 'text-red-600' : 'text-gray-600'
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => {
+                  setAgreedToTerms(e.target.checked)
+                  if (errors.terms) setErrors({ ...errors, terms: '' })
+                }}
+                className="mt-1 cursor-pointer"
+              />
               <span>
                 I agree to the <span className="text-blue-600 hover:underline">Terms of Service</span> and{' '}
                 <span className="text-blue-600 hover:underline">Privacy Policy</span>
               </span>
             </label>
+            {errors.terms && <p className="text-red-600 text-xs">⚠️ {errors.terms}</p>}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-linear-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold mt-6 hover:shadow-lg transition disabled:opacity-50 transform hover:-translate-y-0.5 cursor-pointer"
+              className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold mt-6 hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
             >
-              {loading ? 'Creating Account...' : 'Create Account'}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-spin">⏳</span>
+                  Creating Account...
+                </span>
+              ) : (
+                'Create Account'
+              )}
             </button>
           </form>
 
-          {/* Divider */}
           <div className="flex items-center gap-4 my-6">
             <div className="flex-1 h-px bg-gray-300"></div>
             <span className="text-gray-500 text-xs font-medium">OR</span>
             <div className="flex-1 h-px bg-gray-300"></div>
           </div>
 
-          {/* Google Button */}
-          <button className="w-full py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition cursor-pointer text-sm">
-            🔷 Sign up with Google
+          <button
+            type="button"
+            onClick={() => toast('Google Sign-Up coming soon!', { icon: '🔜' })}
+            disabled
+            className="w-full py-3 bg-gray-100 border border-gray-300 text-gray-500 rounded-lg font-semibold hover:bg-gray-100 cursor-not-allowed text-sm opacity-60"
+            title="Coming in Day 30"
+          >
+            🔷 Sign up with Google (Coming Soon)
           </button>
 
-          {/* Login Link */}
           <div className="text-center mt-6 pt-6 border-t border-gray-200 text-sm">
             <p className="text-gray-600">
               Already have an account?{' '}
